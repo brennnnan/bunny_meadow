@@ -87,6 +87,7 @@ const SharedScreen = forwardRef<SharedScreenHandle, SharedScreenProps>(
           ref={videoRef}
           autoPlay
           playsInline
+          muted={isLocalSharing}
           className="w-full h-full"
           style={{ objectFit: "contain" }}
         />
