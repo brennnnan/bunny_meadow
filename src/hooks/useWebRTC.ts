@@ -48,6 +48,7 @@ export function useWebRTC({
   // Stable refs for remote streams so ontrack can append to them
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const remoteScreenStreamRef = useRef<MediaStream | null>(null);
+  const remoteWebcamStreamIdRef = useRef<string | null>(null);
 
   // --- Create PeerConnection and wire up signaling ---
   useEffect(() => {
@@ -118,11 +119,19 @@ export function useWebRTC({
     // --- Incoming tracks ---
     pc.ontrack = (event) => {
       const track = event.track;
-      const transceiver = event.transceiver;
-      const mid = transceiver?.mid;
+      const incomingStream = event.streams[0];
 
-      // Determine if this is a screen share track
-      const isScreen = mid != null && screenMidsRef.current.has(mid);
+      // Identify screen tracks by stream: webcam and screen share
+      // tracks arrive on different MediaStreams. The first stream we
+      // see is the webcam; any later stream is a screen share.
+      let isScreen = false;
+      if (incomingStream) {
+        if (!remoteWebcamStreamIdRef.current) {
+          remoteWebcamStreamIdRef.current = incomingStream.id;
+        } else if (incomingStream.id !== remoteWebcamStreamIdRef.current) {
+          isScreen = true;
+        }
+      }
 
       if (isScreen) {
         if (!remoteScreenStreamRef.current) {
@@ -300,6 +309,7 @@ export function useWebRTC({
       screenMidsRef.current.clear();
       remoteStreamRef.current = null;
       remoteScreenStreamRef.current = null;
+      remoteWebcamStreamIdRef.current = null;
       setRemoteStream(null);
       setRemoteScreenStream(null);
       setConnectionState("closed");
