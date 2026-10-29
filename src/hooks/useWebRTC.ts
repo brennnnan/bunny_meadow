@@ -187,9 +187,24 @@ export function useWebRTC({
       setRemoteScreenStream(null);
     }
 
-    function onUserJoined() {
-      // New user joined — if we already have a PC, renegotiation
-      // will happen automatically via onnegotiationneeded
+    async function onUserJoined() {
+      // The impolite peer (first user) sends a fresh offer when the
+      // second user arrives — the original offer was sent to an empty
+      // room and lost, so we must explicitly renegotiate here.
+      if (!politeRef.current) {
+        try {
+          makingOfferRef.current = true;
+          await pc.setLocalDescription();
+          socket.emit("send-offer", {
+            roomId,
+            description: pc.localDescription!.toJSON(),
+          });
+        } catch (err) {
+          console.error("[webrtc] error sending offer on user-joined:", err);
+        } finally {
+          makingOfferRef.current = false;
+        }
+      }
     }
 
     function onUserLeft({ gracePeriod }: { socketId: string; gracePeriod: boolean }) {
