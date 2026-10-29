@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: bunny
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TURN_URLS
+        sync: false # set manually in Render dashboard
+      - key: TURN_USERNAME
+        sync: false
+      - key: TURN_CREDENTIAL
+        sync: false
