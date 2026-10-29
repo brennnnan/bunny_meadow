@@ -68,9 +68,11 @@ export function useWebRTC({
       setRemoteStream(webcamStream);
 
     // Add local webcam tracks
-    localStream.getTracks().forEach((track) => {
-      pc.addTrack(track, localStream);
-    });
+    if (localStream) {
+      localStream.getTracks().forEach((track) => {
+        pc.addTrack(track, localStream);
+      });
+    }
 
     // --- Connection state ---
     pc.onconnectionstatechange = () => {
