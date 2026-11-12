@@ -1,6 +1,27 @@
 "use client";
 
+import { useState } from "react";
 import WebcamFeed from "./WebcamFeed";
+
+type AspectMode = "square" | "portrait" | "landscape";
+
+const aspectClass: Record<AspectMode, string> = {
+  square: "aspect-square",
+  portrait: "aspect-[3/4]",
+  landscape: "aspect-video",
+};
+
+const nextMode: Record<AspectMode, AspectMode> = {
+  square: "portrait",
+  portrait: "landscape",
+  landscape: "square",
+};
+
+const modeIcon: Record<AspectMode, { w: number; h: number }> = {
+  square: { w: 12, h: 12 },
+  portrait: { w: 9, h: 13 },
+  landscape: { w: 14, h: 9 },
+};
 
 interface WebcamPanelProps {
   localStream: MediaStream | null;
@@ -19,10 +40,31 @@ export default function WebcamPanel({
   isLocalVideoEnabled,
   partnerDisconnected,
 }: WebcamPanelProps) {
+  const [aspect, setAspect] = useState<AspectMode>("square");
+  const icon = modeIcon[aspect];
+
   return (
-    <div className="flex flex-col gap-1.5 h-full p-1.5 bg-secondary">
+    <div className="flex flex-col gap-1.5 h-full p-1.5 bg-secondary overflow-y-auto">
+      {/* Aspect toggle */}
+      <button
+        onClick={() => setAspect(nextMode[aspect])}
+        className="self-end flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-muted hover:text-primary bg-tertiary hover:bg-elevated transition-colors shrink-0"
+        title={`Switch to ${nextMode[aspect]}`}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
+          <rect
+            x={(16 - icon.w) / 2}
+            y={(16 - icon.h) / 2}
+            width={icon.w}
+            height={icon.h}
+            rx="1.5"
+          />
+        </svg>
+        {aspect}
+      </button>
+
       {/* Remote webcam (top) */}
-      <div className="relative flex-1 min-h-0">
+      <div className={`relative w-full ${aspectClass[aspect]} shrink-0`}>
         {remoteName ? (
           <>
             <WebcamFeed
@@ -57,7 +99,7 @@ export default function WebcamPanel({
       </div>
 
       {/* Local webcam (bottom) */}
-      <div className="relative flex-1 min-h-0">
+      <div className={`relative w-full ${aspectClass[aspect]} shrink-0`}>
         <WebcamFeed
           stream={localStream}
           displayName={localName}
